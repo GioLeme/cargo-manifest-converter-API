@@ -9,6 +9,8 @@ const path = require('path');
 
 const app = express();
 const upload = multer({ dest: 'uploads/' });
+const cors = require('cors');
+app.use(cors());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
