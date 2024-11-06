@@ -15,6 +15,10 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.get('/', (req, res) => {
+  return res.send('welcome');
+});
+
 app.post('/upload', upload.single('file'), async (req, res) => {
   const filePath = req.file.path;
   let dataBuffer = fs.readFileSync(filePath);
