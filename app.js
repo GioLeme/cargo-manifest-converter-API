@@ -8,7 +8,7 @@ const path = require('path');
 
 
 const app = express();
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: multer.memoryStorage() });
 const cors = require('cors');
 app.use(cors());
 
@@ -20,15 +20,16 @@ app.get('/', (req, res) => {
 });
 
 app.post('/upload', upload.single('file'), async (req, res) => {
-  const filePath = req.file.path;
-  let dataBuffer = fs.readFileSync(filePath);
+  const dataBuffer = req.file.buffer;
 
   try {
-    let data = await pdfParse(dataBuffer);
-    let extractedData = extractManifestData(data.text);
+    // Parse PDF content
+    const data = await pdfParse(dataBuffer);
+    const extractedData = extractManifestData(data.text);
 
-    let workbook = new ExcelJS.Workbook();
-    let worksheet = workbook.addWorksheet('Manifest');
+    // Create a new workbook and add a worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Manifest');
 
     worksheet.columns = [
       { header: 'AIR WAYBILL', key: 'AIR WAYBILL', width: 30 },
@@ -38,17 +39,16 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
     worksheet.addRows(extractedData);
 
-    const fileName = 'manifest.xlsx';
-    const filePath = path.join(__dirname, fileName);
-    await workbook.xlsx.writeFile(filePath);
+    // Write the workbook to a buffer instead of a file
+    const buffer = await workbook.xlsx.writeBuffer();
 
-    res.download(filePath, fileName, (err) => {
-      if (err) {
-        console.error('Error downloading the file', err);
-      }
-      fs.unlinkSync(filePath);
-      fs.unlinkSync(req.file.path);
-    });
+    // Set appropriate headers for file download
+    res.setHeader('Content-Disposition', 'attachment; filename=manifest.xlsx');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+    // Return the buffer as a download response
+    res.end(buffer);
+
   } catch (error) {
     console.error('Error processing the PDF', error);
     res.status(500).send('Error processing the PDF');
