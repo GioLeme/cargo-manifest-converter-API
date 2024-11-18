@@ -1,4 +1,4 @@
-const pdfService = require('../services/pdfService');
+const pdfService = require('../services/pdfServiceAWB');
 const ExcelJS = require('exceljs');
 
 exports.uploadFile = async (req, res) => {
